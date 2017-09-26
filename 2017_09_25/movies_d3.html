@@ -9,9 +9,10 @@
 </head>
 
 <body>
-<div id="chart_1"><h1 class="centered">Worldwild Gross</h1></div>
-<div id="chart_2"><h1 class="centered">Budget</h1></div>
-<div id="chart_3"><h1 class="centered">Profit</h1></div>
+<div id="chart_1"><h1 class="centered">Worldwild Gross by Movie</h1></div>
+<div id="chart_2"><h1 class="centered">Budget by Movie</h1></div>
+<div id="chart_3"><h1 class="centered">Profit by Movie</h1></div>
+<div id="chart_4"><h1 class="centered">Worldwild Gross by Genre</h1></div>
 
 
 <script type="text/javascript">
@@ -84,6 +85,53 @@
                 .sort(comparator);
     }
 
+    function render_chart_4(data, comparator) {
+        d3.select("#chart_4").selectAll("div.h-bar")
+                .data(data)
+            .enter().append("div")
+            .attr("class", "h-bar color_4")
+            .append("span");
+        
+        d3.select("#chart_4").selectAll("div.h-bar")
+                .data(data)
+            .attr("class", "h-bar color_4")
+            .style("width", function (d) {
+                return d.Worldwide_Gross_M * 0.1 +  "px";
+            })
+            .select("span")
+                .text(function (d) {
+                    return d.Genre;
+                });
+         if(comparator)
+            d3.select("#chart_4"
+)                .selectAll("div.h-bar") 
+                .sort(comparator);
+    }
+
+    function getGenresSum(data){
+        let genre = {};
+
+        for (var i = 0; i < data.length; i++) {
+            element = data[i]
+            if (!(element.Genre in genre))  {
+                genre[element.Genre] = element.Worldwide_Gross_M;
+            } else {
+                genre[element.Genre] += element.Worldwide_Gross_M;
+            }
+        }
+
+        let result = []
+
+        for (var key in genre) {
+            var obj = {};
+            obj['Genre'] = key
+            obj['Worldwide_Gross_M'] = genre[key]
+            result.push(obj);
+        }
+
+        return result;
+    }
+
 
     var compareGross = function (a, b) { 
         return a.Worldwide_Gross_M < b.Worldwide_Gross_M?1:-1;
@@ -98,11 +146,12 @@
         return (a.Worldwide_Gross_M - a.Budget_M) < (b.Worldwide_Gross_M - b.Budget_M)?1:-1;
     };
 
+
     d3.json("movies.json", function(error, json){ 
         render_chart_1(json, compareGross);
         render_chart_2(json, compareBudget);
         render_chart_3(json, compareProfit);
- 
+        render_chart_4(getGenresSum(json), compareGross);
     });
 </script>
 </body>
