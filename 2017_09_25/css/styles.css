@@ -69,3 +69,7 @@ div {
 .color_3 {
     background-color: #7570b3;
 }
+
+.centered {
+            text-align: center;
+        }
