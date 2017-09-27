@@ -28,7 +28,7 @@
                 .data(data)
             .attr("class", "h-bar color_1")
             .style("width", function (d) {
-                return (d.Worldwide_Gross_M * 0.6) + "px";
+                return (d.Worldwide_Gross_M * 0.4) + "px";
             })
             .select("span")
                 .text(function (d) {
@@ -74,7 +74,7 @@
                 .data(data)
             .attr("class", "h-bar color_3")
             .style("width", function (d) {
-                return (d.Worldwide_Gross_M - d.Budget_M) * 0.6+ "px";
+                return (d.Worldwide_Gross_M - d.Budget_M) * 0.4+ "px";
             })
             .select("span")
                 .text(function (d) {
@@ -97,7 +97,7 @@
                 .data(data)
             .attr("class", "h-bar color_4")
             .style("width", function (d) {
-                return d.Worldwide_Gross_M * 0.1 +  "px";
+                return d.Worldwide_Gross_M * 0.06 +  "px";
             })
             .select("span")
                 .text(function (d) {
