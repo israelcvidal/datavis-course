@@ -34,13 +34,97 @@
             <div class='container-fluid'>
                 <h1> Crimes in Chicago </h1>
                 <div id="mapid"></div>
-                <div id="crime-chart"></div>
-                <div id="crimes-day-line"></div>
+                
+                <div id='total-crimes-chart'>
+                    <h4> Number of Crimes by Type </h4>
+                </div>
+                <div id="crimes-by-day-chart">
+                    <h4> Crimes by Day </h4>
+                </div>
 
             </div>
             <script type="text/javascript">
               // dc row chart
               // dc.seriesChart
+                var totalCrimesChart = dc.barChart("#total-crimes-chart")
+                var crimesByDayChart = dc.seriesChart("#crimes-by-day-chart")
+
+                d3.csv("Crimes_Chicago_Sep2017.csv", function (data) {
+                  // format our data
+                  var map = L.map('mapid').setView([41.870218, -87.679813], 10);
+                  L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                  attribution: '&copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+                  maxZoom: 17
+                  }).addTo(map);
+
+
+                  data.forEach(function(d){
+                    var circle = L.circle([d.Latitude, d.Longitude], 100, {
+                                  color: getColor(d["Primary Type"]),
+                                  weight: 2,
+                                  fillColor: getColor(d["Primary Type"]),
+                                  fillOpacity: 0.5
+                                  }).addTo(map);
+                    circle.bindPopup("Primaty Type: " + getColor(d["Primary Type"]));
+
+                  });
+
+                function getColor(crime){
+                    if (crime == "HOMICIDE"){ return "#f03b20"}
+                    if (crime == "BURGLARY"){ return "#feb24c"}
+                    if (crime == "ROBBERY"){ return "#ffeda0"}
+                }
+
+              
+                var facts = crossfilter(data);
+                    
+                var crimeDime = facts.dimension(function(d){return d["Primary Type"]})
+                
+                var totalByCrime = crimeDime.group();
+    
+                var crimeByDayDime = facts.dimension(function(d){
+                    return [d["Primary Type"], d["Date"]];
+                })
+                
+                var crimeByDayGroup = crimeByDayDime.group();
+                    
+                totalCrimesChart
+                    .width(800)
+                    .height(400)
+                    .margins({top: 50, right: 50, bottom: 25, left: 40})
+                    .dimension(crimeDime)
+                    .x(d3.scale.ordinal())
+                    .xUnits(dc.units.ordinal)
+                    .renderHorizontalGridLines(true)
+                    .legend(dc.legend().x(700).y(5).itemHeight(13).gap(5))
+                    .brushOn(false)    
+                    .group(totalByCrime, "Total")
+                
+                crimesByDayChart
+                    .width(768)
+                    .height(480)
+                    .chart(function(c) { return dc.lineChart(c).interpolate('cardinal'); })
+                    .x(d3.scale.linear().domain([0,20]))
+                    .brushOn(false)
+                    .yAxisLabel("Crimes")
+                    .xAxisLabel("Time")
+                    .clipPadding(10)
+                    .elasticY(true)
+                    .dimension(crimeByDayDime)
+                    .group(crimeByDayGroup)
+                    .mouseZoomable(true)
+                    .seriesAccessor(function(d) {return +d.key[0];})
+                    .keyAccessor(function(d) {return +d.key[1];})
+                    .valueAccessor(function(d) {return +d.value;})
+                    .legend(dc.legend().x(350).y(350).itemHeight(13).gap(5).horizontal(1).legendWidth(140).itemWidth(70));
+                  crimesByDayChart.yAxis().tickFormat(function(d) {return d3.format(',d')(d+299500);});
+                  crimesByDayChart.margins().left += 40;
+                
+
+              dc.renderAll();
+  
+
+            });
             </script>
 
             <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
