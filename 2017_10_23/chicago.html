@@ -31,7 +31,11 @@
 <body>
     <div class='container-fluid'>
         <h1> Crimes in Chicago </h1>
-        <div id="mapid"></div>
+            <h4> Map of Crimes in Chicago </h4>
+
+        <div id="mapid">
+
+        </div>
 
         <div id='total-crimes-chart'>
             <h4> Number of Crimes by Type </h4>
@@ -46,7 +50,17 @@
         // dc.seriesChart
         var totalCrimesChart = dc.barChart("#total-crimes-chart")
         var crimesByDayChart = dc.seriesChart("#crimes-by-day-chart")
-
+        var dtFormat = d3.time.format("%m/%d/%Y %H:%M:%S %p");
+        var colorScale = d3.scale.ordinal()
+            .domain(["HOMICIDE", "ROBBERY", "BURGLARY"])
+            .range(["#de2d26", "#fee0d2", "#fc9272"]);
+            
+        // var circle = L.circle([d.lat, d.lng], 100, {
+        // color: colorScale(d.crimeType),
+        // weight: 1,
+        // fillColor: colorScale(d.crimeType),
+        // fillOpacity: 0.5
+        // }).addTo(map);
         d3.csv("Crimes_Chicago_Sep2017.csv", function (data) {
             // format our data
             var map = L.map('mapid').setView([41.870218, -87.679813], 10);
@@ -59,21 +73,23 @@
 
 
             data.forEach(function(d){
+                            d.dtg = dtFormat.parse(d.Date);
+ 
                             var circle = L.circle([d.Latitude, d.Longitude], 100, 
                             {
-                                color: getColor(d["Primary Type"]),
+                                color: colorScale(d["Primary Type"]),
                                 weight: 2,
-                                fillColor: getColor(d["Primary Type"]),
+                                fillColor: colorScale(d["Primary Type"]),
                                 fillOpacity: 0.5
                             }).addTo(map);
-                            circle.bindPopup("Primaty Type: " + getColor(d["Primary Type"]));
+                            circle.bindPopup("Primaty Type: " + d["Primary Type"]);
 
                         });
 
             function getColor(crime){
-                if (crime == "HOMICIDE"){ return "#f03b20"}
-                if (crime == "BURGLARY"){ return "#feb24c"}
-                if (crime == "ROBBERY"){ return "#ffeda0"}
+                if (crime == "HOMICIDE"){ return "#de2d26"}
+                if (crime == "BURGLARY"){ return "#fc9272"}
+                if (crime == "ROBBERY"){ return "#fee0d2"}
             }
 
 
@@ -83,45 +99,45 @@
 
             var totalByCrime = crimeDime.group();
 
-            var crimeByDayDime = facts.dimension(function(d){
-                return [d["Primary Type"], d["Date"]];
-            })
+            var dayCrimeTypeDimension = facts.dimension(function (d){
+                return [d3.time.day(d.dtg), d["Primary Type"]];
+            });
 
-            var crimeByDayGroup = crimeByDayDime.group();
-                        
+            var dayCrimeTypeCount = dayCrimeTypeDimension.group();   
+
             totalCrimesChart
-            .width(800)
-            .height(400)
-            .margins({top: 50, right: 50, bottom: 25, left: 40})
-            .dimension(crimeDime)
-            .x(d3.scale.ordinal())
-            .xUnits(dc.units.ordinal)
-            .renderHorizontalGridLines(true)
-            .legend(dc.legend().x(700).y(5).itemHeight(13).gap(5))
-            .brushOn(false)    
-            .group(totalByCrime, "Total")
+                .width(800)
+                .height(400)
+                .margins({top: 50, right: 50, bottom: 25, left: 40})
+                .dimension(crimeDime)
+                .x(d3.scale.ordinal())
+                .xUnits(dc.units.ordinal)
+                .renderHorizontalGridLines(true)
+                .brushOn(false)
+                .on('renderlet', function(chart){
+                                    chart.selectAll('rect.bar').each(function(d){
+                                        d3.select(this).attr("style", "fill: " + colorScale(d.x));
+                                    });
+                                }
+                    )
+                .ordering(function(d){return d.value})    
+                .group(totalByCrime);
 
             crimesByDayChart
-            .width(768)
-            .height(480)
-            .chart(function(c) { return dc.lineChart(c).interpolate('cardinal'); })
-            .x(d3.scale.linear().domain([0,20]))
-            .brushOn(false)
-            .yAxisLabel("Crimes")
-            .xAxisLabel("Time")
-            .clipPadding(10)
-            .elasticY(true)
-            .dimension(crimeByDayDime)
-            .group(crimeByDayGroup)
-            .mouseZoomable(true)
-            .seriesAccessor(function(d) {return +d.key[0];})
-            .keyAccessor(function(d) {return +d.key[1];})
-            .valueAccessor(function(d) {return +d.value;})
-            .legend(dc.legend().x(350).y(350).itemHeight(13).gap(5).horizontal(1).legendWidth(140).itemWidth(70));
-            crimesByDayChart.yAxis().tickFormat(function(d) {return d3.format(',d')(d+299500);});
-            crimesByDayChart.margins().left += 40;
-
-
+                .width(960)
+                .height(150)
+                .yAxisLabel("Number of Crimes")
+                .xAxisLabel("Date")
+                .margins({top: 10, right: 10, bottom:20, left: 40})
+                .dimension(dayCrimeTypeDimension)
+                .group(dayCrimeTypeCount)
+                .transitionDuration(500)
+                .x(d3.time.scale().domain(d3.extent(data, function(d) { return d3.time.day(d.dtg); })))
+                .elasticY(true)
+                .seriesAccessor(function(d) { return d.key[1]; })
+                .keyAccessor(function(d) {return d.key[0];})
+                .ordinalColors(["#fc9272", "#de2d26", "#fee0d2"]);
+                
             dc.renderAll();
         });
     </script>
