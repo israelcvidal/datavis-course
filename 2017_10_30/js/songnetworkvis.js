@@ -46,6 +46,8 @@ function Network() {
       // add radius to the node so we can use it later
       n.radius = circleRadius(n.playcount);
     });
+      
+      
     // Then we will create a map with
     // id's -> node objects
     // using the mapNodes function above and store it in the nodesMap variable.
